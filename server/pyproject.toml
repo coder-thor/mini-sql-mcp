@@ -1,7 +1,7 @@
 [project]
-name = "streamable-http-server"
+name = "mini-sql-mcp"
 version = "0.1.0"
-description = "手写 Streamable HTTP 服务端，不依赖 MCP SDK"
+description = "Read-only SQLite MCP server"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",
