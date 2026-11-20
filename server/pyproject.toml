@@ -1,0 +1,9 @@
+[project]
+name = "streamable-http-server"
+version = "0.1.0"
+description = "手写 Streamable HTTP 服务端，不依赖 MCP SDK"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.34.0",
+]
