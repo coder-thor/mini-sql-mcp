@@ -1,6 +1,9 @@
 import argparse
 
 from logger import setup_logging
+
+setup_logging()
+
 from transports import TRANSPORTS, TransportOptions, create_transport
 
 
@@ -14,7 +17,6 @@ def main() -> None:
     # 如果一个函数的内容已经固定写完了就要进来避免对齐进行更改 因为一个函数可能会被很多地方调用 foo a b c d
     # 函数体是 immutable 不可变更
 
-    setup_logging()
     options = TransportOptions(host=args.host, port=args.port)
     # 造车工厂 奔驰 宝马 特斯拉
     create_transport(args.transport, options).serve()

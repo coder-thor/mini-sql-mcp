@@ -1,30 +1,50 @@
-import asyncio
 import logging
 
 import uvicorn
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Response
+from fastapi import Request as HttpRequest
 
+from jsonrpc import (
+    JSONRPCError,
+    JSONRPCRequest,
+    JSONRPCResponse,
+    ProtocolError,
+    failure,
+    jsonrpc_message_adapter,
+)
+from messages import create_message
 from transports.base import Transport
 
 logger = logging.getLogger("http")
 
-LOGGED_HEADERS = ("user-agent", "accept", "content-type", "mcp-protocol-version", "mcp-session-id")
 
-# streamablehttp 
+def json_reply(message: JSONRPCResponse | JSONRPCError) -> Response:
+    line = message.model_dump_json()
+    logger.info("send %s", line)
+    # 返回 json对象
+    return Response(line, status_code=200, media_type="application/json")
+
+
+# streamablehttp
 class HttpTransport(Transport):
     def serve(self) -> None:
         app = FastAPI()
 
-        @app.api_route("/mcp", methods=["GET", "POST", "DELETE"])
-        async def mcp(request: Request) -> Response:
-            headers = {name: request.headers[name] for name in LOGGED_HEADERS if name in request.headers}
-            body = (await request.body()).decode("utf-8", errors="replace")
-            logger.info("%s /mcp headers=%s", request.method, headers)
-            logger.info("%s /mcp body=%s", request.method, body)
-            while not await request.is_disconnected():
-                await asyncio.sleep(1)
-            logger.info("%s /mcp client disconnected", request.method)
-            return Response()
+        @app.post("/mcp")
+        async def mcp(request: HttpRequest) -> Response:
+            raw = (await request.body()).decode("utf-8", errors="replace")
+            logger.info("recv %s", raw)
+           # { id: xx, method: xx params: {xxx} }
+            message = jsonrpc_message_adapter.validate_json(raw)
+            logger.info("parsed %s", type(message).__name__)
+            # 通知和别人发来的回复：官方这里回 202
+            if not isinstance(message, JSONRPCRequest):
+                return Response(status_code=202)
+            try:
+                reply = create_message(message).reply()
+            except ProtocolError as caught:
+                reply = failure(caught.id, caught.code, caught.message)
+            return json_reply(reply)
 
         host, port = self.options.host, self.options.port
         logger.info("listening on http://%s:%d/mcp", host, port)
