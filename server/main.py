@@ -1,9 +1,11 @@
 import argparse
+from pathlib import Path
 
 from logger import setup_logging
 
 setup_logging()
 
+from db import configure
 from transports import TRANSPORTS, TransportOptions, create_transport
 
 
@@ -12,7 +14,9 @@ def main() -> None:
     parser.add_argument("--transport", choices=list(TRANSPORTS), default="stdio")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--db", default=str(Path(__file__).parent / "demo.sqlite"))
     args = parser.parse_args()
+    configure(args.db)
     # 面对这种多分支语句我们到底要怎么拆， 开闭原则
     # 如果一个函数的内容已经固定写完了就要进来避免对齐进行更改 因为一个函数可能会被很多地方调用 foo a b c d
     # 函数体是 immutable 不可变更
