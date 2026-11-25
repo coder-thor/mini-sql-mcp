@@ -5,25 +5,24 @@ from logger import setup_logging
 
 setup_logging()
 
+import tools  # noqa: F401
+from app import mcp
 from db import configure
-from transports import TRANSPORTS, TransportOptions, create_transport
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Read-only SQLite MCP server")
-    parser.add_argument("--transport", choices=list(TRANSPORTS), default="stdio")
+    parser.add_argument("--transport", choices=["stdio", "http"], default="stdio")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--db", default=str(Path(__file__).parent / "demo.sqlite"))
     args = parser.parse_args()
     configure(args.db)
-    # 面对这种多分支语句我们到底要怎么拆， 开闭原则
-    # 如果一个函数的内容已经固定写完了就要进来避免对齐进行更改 因为一个函数可能会被很多地方调用 foo a b c d
-    # 函数体是 immutable 不可变更
 
-    options = TransportOptions(host=args.host, port=args.port)
-    # 造车工厂 奔驰 宝马 特斯拉
-    create_transport(args.transport, options).serve()
+    if args.transport == "stdio":
+        mcp.run("stdio")
+    else:
+        mcp.run("streamable-http", host=args.host, port=args.port)
 
 # stdio模式最明显的特征就是 它自己不会启动 它在等谁拉他 父进程 ai agent
 

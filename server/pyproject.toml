@@ -4,7 +4,5 @@ version = "0.1.0"
 description = "Read-only SQLite MCP server"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.115.0",
-    "pydantic>=2",
-    "uvicorn>=0.34.0",
+    "mcp[cli]>=2,<3",
 ]
